@@ -191,8 +191,8 @@ def Feeds(title, feed_url):
 
 ####################################################################################################
 @route('/video/hulu/shows/{page}', page=int)
-def ListShows(title, channel, item_type, display, page = 0):
-  
+def ListShows(title, channel, item_type, display, page=0):
+
   oc = ObjectContainer()
   result = {}
 
@@ -299,8 +299,8 @@ def ListSeasons(title, show_url, info_url, show_id):
   return oc
 
 ####################################################################################################
-@route('/video/hulu/episodes')
-def ListEpisodes(title, show_id, show_name, season, show_url = None, items_per_page = 5):
+@route('/video/hulu/episodes', items_per_page=int)
+def ListEpisodes(title, show_id, show_name, season, show_url=None, items_per_page=5):
 
   oc = ObjectContainer(title2 = title)
   page = 1
@@ -396,8 +396,8 @@ def ListEpisodes(title, show_id, show_name, season, show_url = None, items_per_p
   return oc
 
 ####################################################################################################
-@route('/video/hulu/queue')
-def Queue(title, page = 1):
+@route('/video/hulu/queue', page=int)
+def Queue(title, page=1):
 
   oc = ObjectContainer(title2 = title)
   queue_page = HTML.ElementFromURL(URL_QUEUE % page)
