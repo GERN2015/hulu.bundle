@@ -2,6 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>URL</key>
+	<dict>
+		<key>Hulu</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.hulu.com/watch/215794/city-lights?c=Classics</string>
+				<string>http://www.hulu.com/watch/93426/100-girls</string>
+				<string>http://www.hulu.com/watch/252172/tiger-and-bunny-confidence-is-a-plant-of-slow-growth</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>^http://(www\.)?hulu.com/watch/.+</string>
+				<string>^http://player.hulu.com/express/[0-9]+</string>
+			</array>
+		</dict>
+	</dict>
 	<key>Search</key>
 	<dict>
 		<key>Hulu</key>

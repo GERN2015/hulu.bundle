@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site site="http://.*hulu.com"
+			initialState="wait-for-frame-load"
+			version="1.0"
+            minPluginHeight="300"
+            minPluginWidth="700"
+			identifier="com.plexapp.plugins.hulu"
+			manualLock="true"
+			agent="Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.12) Gecko/20101026 Firefox/3.6.12">
+
+	<pre m="p\.hulu\.com/" />
+
+	<condition name="paused">
+		<and>
+			<color x="376" y="152" rgb="ffffff" />
+			<color x="376" y="203" rgb="cccccc" />
+			<color x="418" y="177" rgb="dcdcdc" />
+		</and>
+	</condition>
+
+	<seekbar type="simple">
+		<start x="75" y="360"/>
+		<end x="714" y="360"/>
+		<played>
+			<condition>
+				<or>
+					<color rgb="898989"/>
+					<color rgb="909090"/>
+					<color rgb="888888"/>
+				</or>
+			</condition>
+		</played>
+	</seekbar>
+
+	<!-- We're not logged in, and we have the prefs -->
+	<condition name="need-to-login">
+		<and>
+			<pref name="username" exists="true" />
+			<pref name="password" exists="true" />
+		</and>
+	</condition>
+
+	<!-- Wait for page to load -->
+	<state name="wait-for-frame-load">
+		<event>
+			<condition>
+				<frameLoaded />
+			</condition>
+			<action>
+				<pause time="30" />
+				<goto state="check-for-auth" />
+			</action>
+		</event>
+	</state>
+	
+	<!-- See if we're logged in -->
+	<state name="check-for-auth">
+		<event>
+			<condition>
+				<not>
+					<condition name="need-to-login" />
+				</not>
+			</condition>
+			<action>
+    			<lockPlugin />
+				<goto state="playing" />
+			</action>
+		</event>
+		<event>
+			<condition>
+				<condition name="need-to-login" />
+			</condition>
+			<action>
+				<run script="Login.auth('$(username)', '$(password)', true)" />
+				<pause time="1000" />
+				<visit url="${url}" />
+				<lockPlugin />
+				<goto state="playing" />
+			</action>
+		</event>
+	</state>
+	
+	<!-- PLAYING -->
+	<state name="playing">
+		
+		<!-- Click to pause -->
+		<event>
+			<condition>
+				<command name="pause"/>
+			</condition>
+			<action>
+                <type key="32"/>
+			</action>
+		</event>
+
+		<!-- Detect paused video -->
+		<event>
+			<condition>
+				<condition name="paused"/>
+			</condition>
+			<action>
+				<goto state="paused"/>
+			</action>
+		</event>
+		
+		<!-- Video ends -->
+		<event>
+			<condition>
+				<color x="664" y="13" rgb="7e7d7d"/>
+			</condition>
+			<action>
+				<goto state="end"/>
+			</action>
+		</event>
+		
+		<!-- Need log-in -->
+		<!-- Play options -->
+	</state>
+	
+	<!-- PAUSED -->
+	<state name="paused">
+		
+		<!-- Wait for play command -->
+		<event>
+			<condition>
+				<command name="play"/>
+			</condition>
+			<action>
+                <type key="32"/>
+			</action>
+		</event>
+		
+		<!-- Wait for pause button to disappear -->
+		<event>
+			<condition>
+				<not>
+					<condition name="paused" />
+				</not>
+			</condition>
+			<action>
+				<goto state="playing"/>
+			</action>
+		</event>
+	</state>
+</site>
+

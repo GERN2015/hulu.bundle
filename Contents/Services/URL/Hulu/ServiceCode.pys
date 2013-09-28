@@ -1,0 +1,103 @@
+API_URL = 'http://www.hulu.com/api/oembed.json?url=%s'
+HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s'
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0'}
+
+####################################################################################################
+def NormalizeURL(url):
+
+	url = url.split('#')[0].split('?')[0]
+
+	if 'player.hulu.com' in url:
+		url = 'http://www.hulu.com/watch/%s' % GetId(url)
+
+	if not '/watch/' in url:
+		try:
+			HTTP.Request(url, follow_redirects=False, headers=HTTP_HEADERS).headers
+		except Ex.RedirectError, e:
+			if 'Location' in e.headers:
+				return e.headers['Location']
+
+	return '/'.join(url.split('/')[:5])
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	if not '/watch/' in url:
+		return None
+
+	try:
+		json_obj = JSON.ObjectFromURL(API_URL % String.Quote(url), headers=HTTP_HEADERS)
+	except:
+		raise Ex.MediaNotAvailable
+
+	eid = json_obj['embed_url'].split('?eid=')[1]
+	headers = HTTP_HEADERS
+	headers['Referer'] = 'http://download.hulu.com/huludesktop.swf?ver=0.1.0'
+	details = XML.ElementFromURL(HULU_ASSETS % eid, headers=headers, sleep=1.5)
+
+	title = details.xpath('//video/title')[0].text
+	summary = details.xpath('//video/description')[0].text
+
+	try:
+		airdate = Datetime.ParseDate(details.xpath('//video/original-premiere-date')[0].text).date()
+	except:
+		airdate = None
+
+	duration = int(float(details.xpath('//video/duration')[0].text)*1000)
+	thumb = details.xpath('//video/thumbnail-url')[0].text.split('?')[0] + '?size=512x288'
+	rating = float(details.xpath('//video/user-star-rating')[0].text)
+
+	plus_only = details.xpath('//video/is-plus-web-only')[0].text
+
+	if (plus_only == 'true'):
+		title = 'HuluPlus - %s' % title
+
+	try:
+		show_title = details.xpath('//video/show/name')[0].text
+		season = details.xpath('//video/season-number')[0].text
+		episode = details.xpath('//video/episode-number')[0].text
+
+		return EpisodeObject(
+			title = title,
+			show = show_title,
+			duration = duration,
+			season = int(season),
+			index = int(episode),
+			originally_available_at = airdate,
+			summary = summary,
+			thumb = thumb
+		)
+	except:
+		return MovieObject(
+			title = title,
+			duration = duration,
+			originally_available_at = airdate,
+			summary = summary,
+			thumb = thumb
+		)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(key = WebVideoURL(url))
+			],
+			audio_channels = 2
+		)
+	]
+
+####################################################################################################
+def GetId(url):
+
+	import md5
+
+	cid = url.rsplit('/',1)[1]
+	m = md5.new('%sMAZxpK3WwazfARjIpSXKQ9cmg9nPe5wIOOfKuBIfz7bNdat6gQKHj69ZWNWNVB1' % cid).digest()
+	eid = String.Base64Encode(m).replace('+', '-').replace('/', '_').replace('=', '').replace('\n', '')
+
+	details = XML.ElementFromURL(HULU_ASSETS % eid, headers=HTTP_HEADERS)
+	id = details.xpath('//video/id')[0].text
+
+	return id
